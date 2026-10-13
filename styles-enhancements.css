@@ -1,0 +1,48 @@
+
+
+/* ======================================================
+   3D controls: desktop and mobile polish
+====================================================== */
+
+.bmw-btn {
+  min-width: 118px;
+  min-height: 42px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.24);
+}
+
+.bmw-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+@media (max-width: 720px) {
+  .bmw-btn {
+    right: 14px;
+    min-width: 104px;
+    min-height: 40px;
+    padding: 10px 13px;
+    font-size: 10px;
+  }
+
+  .bmw-btn.sound-control {
+    top: 86px !important;
+  }
+
+  .bmw-btn.replay-control {
+    top: 136px !important;
+  }
+
+  .bmw-btn.rev-control {
+    top: 186px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .bmw-btn {
+    right: 10px;
+    min-width: 96px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}

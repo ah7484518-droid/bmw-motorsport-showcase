@@ -1,0 +1,206 @@
+/* ======================================================
+   ORVEX Section
+   بيتحمل بعد styles.css وبيستخدم متغيرات الموقع
+   (--black, --muted, --line, --blue, --max-width, --ease)
+   ====================================================== */
+
+:root {
+  --orvex-cyan: #5cf0ff;
+  --orvex-blue: #2f8bff;
+  --orvex-royal: #2a45ff;
+  --orvex-gradient: linear-gradient(
+    90deg,
+    var(--orvex-cyan),
+    var(--orvex-blue) 55%,
+    var(--orvex-royal)
+  );
+  --orvex-arabic-font: "Cairo", "Tajawal", "Segoe UI", Tahoma, sans-serif;
+}
+
+
+.orvex-section {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 170px 35px;
+  background: var(--black);
+}
+
+
+/* اسم ORVEX كبير جدًا في الخلفية، بنفس أسلوب كلمات الأقسام التانية */
+.orvex-background-word {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  color: rgba(92, 240, 255, 0.04);
+  font-size: clamp(110px, 24vw, 400px);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 0.8;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  user-select: none;
+}
+
+
+/* وهج أزرق ناعم ناحية الكارت */
+.orvex-section::before {
+  position: absolute;
+  right: -10%;
+  bottom: -30%;
+  z-index: -1;
+  width: 60vw;
+  max-width: 800px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(47, 139, 255, 0.2),
+    rgba(47, 139, 255, 0) 65%
+  );
+  content: "";
+  pointer-events: none;
+}
+
+
+.orvex-inner {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(40px, 6vw, 100px);
+  align-items: center;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+
+/* ===== العنوان (نفس مقاسات عناوين الموقع) ===== */
+
+.orvex-title {
+  max-width: 760px;
+  margin-top: 25px;
+  margin-bottom: 40px;
+  color: var(--white);
+  font-size: clamp(42px, 6vw, 84px);
+  font-weight: 500;
+  letter-spacing: -0.075em;
+  line-height: 0.96;
+}
+
+.orvex-title span {
+  display: block;
+  background: var(--orvex-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+
+/* ===== النص العربي ===== */
+
+.orvex-arabic {
+  max-width: 34em;
+  padding-inline-start: 22px;
+  border-inline-start: 2px solid var(--orvex-blue);
+  color: #aab4be;
+  font-family: var(--orvex-arabic-font);
+  font-size: clamp(15px, 1.25vw, 18px);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 2;
+  text-align: start;
+}
+
+
+/* ===== كارت التواصل (بنفس شكل كروت الـ features) ===== */
+
+.orvex-cta-card {
+  position: relative;
+  padding: clamp(28px, 4vw, 48px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.055),
+      transparent 55%
+    ),
+    var(--black-card);
+}
+
+/* خط التدرج العلوي بألوان ORVEX */
+.orvex-cta-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--orvex-gradient);
+  content: "";
+}
+
+.orvex-question {
+  margin-bottom: 14px;
+  color: var(--white);
+  font-family: var(--orvex-arabic-font);
+  font-size: clamp(20px, 2.2vw, 30px);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
+.orvex-sub {
+  max-width: none;
+  padding-inline-start: 0;
+  border-inline-start: 0;
+}
+
+.orvex-slogan {
+  margin: 30px 0 32px;
+  padding-top: 26px;
+  border-top: 1px solid var(--line);
+  background: var(--orvex-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-size: clamp(13px, 1.5vw, 20px);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.5;
+}
+
+/* زرار Contact بألوان ORVEX (وبنفس حركة أزرار الموقع) */
+.orvex-cta-card .primary-button {
+  background: linear-gradient(90deg, #0b8fd1, #2f78ff 55%, #2a45ff);
+}
+
+.orvex-cta-card .primary-button:hover {
+  background: linear-gradient(90deg, #0b8fd1, #2f78ff 55%, #2a45ff);
+  filter: brightness(1.18);
+}
+
+
+/* ===== تابلت وموبايل ===== */
+
+@media (max-width: 900px) {
+  .orvex-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .orvex-arabic {
+    max-width: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .orvex-section {
+    padding: 110px 24px;
+  }
+
+  .orvex-title {
+    font-size: clamp(43px, 14vw, 70px);
+  }
+}

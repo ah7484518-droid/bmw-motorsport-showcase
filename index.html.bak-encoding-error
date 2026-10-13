@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>BMW M Motorsport</title>
+
+  <meta
+    name="description"
+    content="A cinematic BMW M Motorsport 3D experience."
+  >
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Ø®Ø· Ø¹Ø±Ø¨ÙŠ Ù„Ù‚Ø³Ù… ORVEX -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="./favicon.svg"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./styles.css"
+  >
+
+  <!-- Ø³ØªØ§ÙŠÙ„ Ù‚Ø³Ù… ORVEX (Ù„Ø§Ø²Ù… ÙŠÙŠØ¬ÙŠ Ø¨Ø¹Ø¯ styles.css) -->
+  <link
+    rel="stylesheet"
+    href="./orvex.css"
+  >
+
+  <!-- Final interaction and responsive polish -->
+  <link
+    rel="stylesheet"
+    href="./styles-enhancements.css"
+  >
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+
+<body>
+
+  <!-- Ø´Ø±ÙŠØ· ØªÙ‚Ø¯Ù… Ø§Ù„ØªÙ…Ø±ÙŠØ± -->
+  <div class="scroll-progress">
+    <span></span>
+  </div>
+
+
+  <!-- Ù…Ø¤Ø´Ø± Ø§Ù„Ù…Ø§ÙˆØ³ Ø§Ù„Ù…Ø®ØµØµ -->
+  <div class="custom-cursor"></div>
+  <div class="cursor-ring"></div>
+
+
+  <!-- Ø´Ø§Ø´Ø© Ø§Ù„ØªØÙ…ÙŠÙ„ -->
+  <div class="page-loader">
+    <div class="loader-brand">BMW M</div>
+
+    <div class="loader-line">
+      <span></span>
+    </div>
+
+    <div class="loader-caption">
+      PURE DRIVING EXPERIENCE
+    </div>
+  </div>
+
+
+  <!-- Ø´Ø±ÙŠØ· Ø§Ù„ØªÙ†Ù‚Ù„ -->
+  <header class="site-header">
+
+    <a
+      class="brand"
+      href="#home"
+      aria-label="BMW home"
+    >
+      <span class="brand-mark">M</span>
+
+      <span class="brand-name">
+        M MOTORSPORT
+      </span>
+    </a>
+
+
+    <nav class="main-nav">
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="#models">Models</a>
+      <a href="#heritage">Heritage</a>
+      <a href="#orvex">ORVEX</a>
+      <a href="#booking">Book a drive</a>
+    </nav>
+
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-label="Open menu"
+      aria-expanded="false"
+    >
+      <span></span>
+      <span></span>
+    </button>
+
+  </header>
+
+
+  <!-- Ø§Ù„Ù…ØØªÙˆÙ‰ Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠ -->
+  <main>
+
+    <!-- Hero Section -->
+    <section
+      id="home"
+      class="hero-section"
+    >
+
+      <div class="hero-background-word">
+        M POWER
+      </div>
+
+      <div class="hero-overlay"></div>
+
+
+      <div class="hero-content">
+
+        <div class="eyebrow">
+          BMW M MOTORSPORT / 2025
+        </div>
+
+        <h1 class="hero-title">
+          Built for
+          <span>the bold.</span>
+        </h1>
+
+        <p class="hero-description">
+          A new definition of performance,
+          precision and controlled aggression.
+        </p>
+
+
+        <div class="hero-actions">
+
+          <a
+            class="primary-button magnetic-button"
+            href="#models"
+          >
+            Explore models
+            <span>â†—</span>
+          </a>
+
+          <a
+            class="text-button"
+            href="#features"
+          >
+            Discover the experience
+            <span>â†“</span>
+          </a>
+
+        </div>
+
+      </div>
+
+
+      <!-- Ø¹Ù†ØµØ± Ù…Ø´Ù‡Ø¯ Three.js -->
+      <div
+        id="scene-container"
+        class="scene-container"
+      ></div>
+
+
+      <div class="loading">
+        Loading BMW M4 GT3 EVO...
+      </div>
+
+
+      <div class="hero-meta">
+        <span>01</span>
+        <span class="meta-line"></span>
+        <span>THE NEW ERA OF M</span>
+      </div>
+
+
+      <div class="scroll-indicator">
+        <span>Scroll to explore</span>
+        <i></i>
+      </div>
+
+    </section>
+
+
+    <!-- Ø§Ù„Ù…Ù‚Ø¯Ù…Ø© -->
+    <section class="intro-section section-dark">
+
+      <div class="intro-media reveal-on-scroll">
+        <img
+          src="./assets/images/interior/seats-materials.png"
+          alt="Premium performance seats and interior materials"
+          loading="lazy"
+          decoding="async"
+        >
+        <span class="intro-media-label">MATERIAL / 01</span>
+      </div>
+
+      <div class="section-label">
+        <span>01</span>
+        <span>THE M PHILOSOPHY</span>
+      </div>
+
+
+      <div class="intro-grid">
+
+        <h2>
+          When performance
+          becomes <em>instinct.</em>
+        </h2>
+
+        <p>
+          Every line, every response and every detail
+          is engineered around one purpose: to create
+          a connection between driver and machine.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- Ø§Ù„Ù…Ù…ÙŠØ²Ø§Øª -->
+    <section
+      id="features"
+      class="features-section section-dark"
+    >
+
+      <div class="section-heading">
+
+        <div class="section-label">
+          <span>02</span>
+          <span>ENGINEERED DIFFERENTLY</span>
+        </div>
+
+        <h2>
+          Designed to
+          <span>move you.</span>
+        </h2>
+
+      </div>
+
+
+      <div class="feature-grid">
+
+        <article class="feature-card reveal-card">
+          <div class="feature-media">
+            <img
+              src="./assets/images/interior/cockpit-steering-wheel.png"
+              alt="Race-inspired cockpit with flat-bottom Alcantara steering wheel"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+
+          <div class="feature-number">01</div>
+          <div class="feature-icon">â—’</div>
+
+          <h3>Precision cockpit</h3>
+
+          <p>
+            A driver-focused interior designed
+            around control and concentration.
+          </p>
+
+          <a href="#booking">
+            Discover more â†—
+          </a>
+        </article>
+
+
+        <article class="feature-card reveal-card">
+          <div class="feature-media">
+            <img
+              src="./assets/images/technology/live-cockpit-screens.png"
+              alt="Curved digital display glowing with vehicle telemetry"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+
+          <div class="feature-number">02</div>
+          <div class="feature-icon">âŒ</div>
+
+          <h3>Adaptive intelligence</h3>
+
+          <p>
+            Technology that reacts with you,
+            not against you.
+          </p>
+
+          <a href="#booking">
+            Discover more â†—
+          </a>
+        </article>
+
+
+        <article class="feature-card reveal-card">
+          <div class="feature-media">
+            <img
+              src="./assets/images/technology/aerodynamics-detail.png"
+              alt="Carbon fiber front splitter and aerodynamic canards"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+
+          <div class="feature-number">03</div>
+          <div class="feature-icon">â–³</div>
+
+          <h3>Active aerodynamics</h3>
+
+          <p>
+            Every surface is shaped by airflow,
+            stability and speed.
+          </p>
+
+          <a href="#booking">
+            Discover more â†—
+          </a>
+        </article>
+
+
+        <article class="feature-card reveal-card">
+          <div class="feature-media">
+            <img
+              src="./assets/images/identity/exhaust-sound.png"
+              alt="Titanium exhaust tailpipes glowing at night"
+              loading="lazy"
+              decoding="async"
+            >
+          </div>
+
+          <div class="feature-number">04</div>
+          <div class="feature-icon">âœ¦</div>
+
+          <h3>Pure M sound</h3>
+
+          <p>
+            A mechanical signature engineered
+            to make every arrival unforgettable.
+          </p>
+
+          <a href="#booking">
+            Discover more â†—
+          </a>
+        </article>
+
+      </div>
+
+    </section>
+
+
+    <!-- Ø§Ù„Ø¥ØØµØ§Ø¦ÙŠØ§Øª -->
+    <section class="stats-section">
+
+      <div class="stats-background">
+        POWER
+      </div>
+
+
+      <div class="stats-grid">
+
+        <div class="stat-item">
+          <strong
+            class="counter"
+            data-target="530"
+          >
+            0
+          </strong>
+
+          <span>HP</span>
+          <small>Maximum output</small>
+        </div>
+
+
+        <div class="stat-item">
+          <strong
+            class="counter"
+            data-target="3.2"
+            data-decimals="1"
+          >
+            0
+          </strong>
+
+          <span>SEC</span>
+          <small>0â€“100 km/h</small>
+        </div>
+
+
+        <div class="stat-item">
+          <strong
+            class="counter"
+            data-target="250"
+          >
+            0
+          </strong>
+
+          <span>KM/H</span>
+          <small>Top speed</small>
+        </div>
+
+
+        <div class="stat-item">
+          <strong
+            class="counter"
+            data-target="100"
+          >
+            0
+          </strong>
+
+          <span>%</span>
+          <small>M driving emotion</small>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- Ø§Ù„Ø³ÙŠØ§Ø±Ø© Ø§Ù„Ù…Ù…ÙŠØ²Ø© -->
+    <section class="spotlight-section">
+
+      <div class="spotlight-copy">
+
+        <div class="section-label">
+          <span>03</span>
+          <span>THE M4 GT3 EVO</span>
+        </div>
+
+        <h2>
+          Race-bred.
+          <span>Road-ready.</span>
+        </h2>
+
+        <p>
+          Born from competition. Refined for the road.
+          The M4 GT3 EVO turns every surface into a
+          statement.
+        </p>
+
+        <a
+          href="#booking"
+          class="primary-button"
+        >
+          Request a drive
+          <span>â†—</span>
+        </a>
+
+      </div>
+
+
+      <div class="spotlight-visual">
+        <img
+          class="spotlight-photo"
+          src="./assets/images/models/m8-feature.png"
+          alt="Grand tourer performance car on a wet road at night"
+          loading="lazy"
+          decoding="async"
+        >
+
+        <div class="spotlight-glow"></div>
+
+        <div class="spotlight-word">
+          GT3
+        </div>
+
+        <div class="spotlight-spec">
+          <span>G82</span>
+          <span>EVOLUTION</span>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- Ø§Ù„Ù…ÙˆØ¯ÙŠÙ„Ø§Øª -->
+    <section
+      id="models"
+      class="models-section section-dark"
+    >
+
+      <div class="section-heading">
+
+        <div class="section-label">
+          <span>04</span>
+          <span>FIND YOUR M</span>
+        </div>
+
+        <h2>
+          Choose your
+          <span>attitude.</span>
+        </h2>
+
+      </div>
+
+
+      <div class="model-tabs">
+
+        <button
+          class="model-tab active"
+          type="button"
+          data-model="m-series"
+        >
+          M Series
+        </button>
+
+        <button
+          class="model-tab"
+          type="button"
+          data-model="x-series"
+        >
+          X Series
+        </button>
+
+        <button
+          class="model-tab"
+          type="button"
+          data-model="i-series"
+        >
+          i Series
+        </button>
+
+      </div>
+
+
+      <div class="model-showcase">
+
+        <div
+          class="model-info active"
+          data-panel="m-series"
+        >
+          <span class="model-category">
+            M SERIES
+          </span>
+
+          <h3>M4 Competition</h3>
+
+          <p>
+            Aggressive by nature. Precise by design.
+          </p>
+
+          <a href="#booking">
+            Explore M4 â†—
+          </a>
+        </div>
+
+
+        <div
+          class="model-info"
+          data-panel="x-series"
+        >
+          <span class="model-category">
+            X SERIES
+          </span>
+
+          <h3>XM Label Red</h3>
+
+          <p>
+            Electrified power with commanding presence.
+          </p>
+
+          <a href="#booking">
+            Explore XM â†—
+          </a>
+        </div>
+
+
+        <div
+          class="model-info"
+          data-panel="i-series"
+        >
+          <span class="model-category">
+            i SERIES
+          </span>
+
+          <h3>i5 M60</h3>
+
+          <p>
+            Electric performance without compromise.
+          </p>
+
+          <a href="#booking">
+            Explore i5 â†—
+          </a>
+        </div>
+
+
+        <div class="model-image active" data-panel="m-series">
+          <img
+            src="./assets/images/models/m-series-m4.png"
+            alt="Graphite black performance coupe with rear wing"
+            loading="lazy"
+            decoding="async"
+          >
+        </div>
+
+
+        <div class="model-image" data-panel="x-series">
+          <img
+            src="./assets/images/models/x-series-xm.png"
+            alt="Black luxury performance SUV in studio lighting"
+            loading="lazy"
+            decoding="async"
+          >
+        </div>
+
+
+        <div class="model-image" data-panel="i-series">
+          <img
+            src="./assets/images/models/i-series-i5.png"
+            alt="Silver electric performance sedan with illuminated grille"
+            loading="lazy"
+            decoding="async"
+          >
+        </div>
+
+
+        <div class="model-visual">
+
+          <div class="model-visual-word">
+            M
+          </div>
+
+          <div class="model-visual-line"></div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- Ø§Ù„Ù‡ÙˆÙŠØ© -->
+    <section
+      id="heritage"
+      class="heritage-section"
+    >
+
+      <div class="heritage-image">
+        <img
+          class="heritage-photo"
+          src="./assets/images/identity/red-m-performance.png"
+          alt="Red performance sports car emerging from shadow"
+          loading="lazy"
+          decoding="async"
+        >
+
+        <div class="heritage-image-word">
+          M8
+        </div>
+      </div>
+
+
+      <div class="heritage-copy">
+
+        <div class="section-label">
+          <span>05</span>
+          <span>THE M DNA</span>
+        </div>
+
+        <h2>
+          The legend
+          <span>continues.</span>
+        </h2>
+
+        <p>
+          Decades of motorsport DNA translated into
+          design, technology and performance for
+          the next generation.
+        </p>
+
+        <a
+          href="#booking"
+          class="outline-button"
+        >
+          Explore the legacy
+          <span>â†—</span>
+        </a>
+
+      </div>
+
+    </section>
+
+
+    <!-- Ø§Ù„Ø´Ø±ÙƒØ§Ø¡ -->
+    <section
+      class="partners-section section-dark"
+    >
+
+      <div class="section-label">
+        <span>06</span>
+        <span>BUILT WITH THE BEST</span>
+      </div>
+
+
+      <div class="partners-track">
+        <span>BMW M</span>
+        <span>PIRELLI</span>
+        <span>BREMBO</span>
+        <span>CARBONCORE</span>
+        <span>AKRAPOVIC</span>
+        <span>BMW M</span>
+        <span>PIRELLI</span>
+        <span>BREMBO</span>
+      </div>
+
+    </section>
+
+
+    <!-- ORVEX: Ø§Ù„Ø´Ø±ÙƒØ© -->
+    <section
+      id="orvex"
+      class="orvex-section section-dark"
+    >
+
+      <div
+        class="orvex-background-word"
+        aria-hidden="true"
+      >
+        ORVEX
+      </div>
+
+
+      <div class="orvex-inner">
+
+        <div class="orvex-copy">
+
+          <div class="section-label">
+            <span>07</span>
+            <span>ABOUT ORVEX</span>
+          </div>
+
+          <h2 class="orvex-title">
+            Beyond the Ordinary.
+            <span>Built to Impress.</span>
+          </h2>
+
+          <p
+            class="orvex-arabic"
+            lang="ar"
+            dir="rtl"
+          >
+            ØÙŠØ« ÙŠÙ„ØªÙ‚ÙŠ Ø§Ù„Ø¥Ø¨Ø¯Ø§Ø¹ Ø¨Ø§Ù„ØªÙƒÙ†ÙˆÙ„ÙˆØ¬ÙŠØ§ØŒ ÙˆØªØªØÙˆÙ„ Ø§Ù„Ø£ÙÙƒØ§Ø± Ø¥Ù„Ù‰
+            ØªØ¬Ø§Ø±Ø¨ Ø±Ù‚Ù…ÙŠØ© Ø§Ø³ØªØ«Ù†Ø§Ø¦ÙŠØ©. Ù†ØÙ† ÙÙŠ ORVEX Ù†ØµÙ†Ø¹ ØªØ¬Ø§Ø±Ø¨ 3D
+            ØªÙØ§Ø¹Ù„ÙŠØ© ØªÙƒØ³Ø± Ø§Ù„Ù…Ø£Ù„ÙˆÙØŒ ÙˆØªÙ…Ù†Ø ÙƒÙ„ Ù…Ø´Ø±ÙˆØ¹ Ù‡ÙˆÙŠØ© ÙØ±ÙŠØ¯Ø©
+            ÙˆØØ¶ÙˆØ±Ù‹Ø§ Ù„Ø§ ÙŠÙÙ†Ø³Ù‰.
+          </p>
+
+        </div>
+
+
+        <div class="orvex-cta-card">
+
+          <p
+            class="orvex-question"
+            lang="ar"
+            dir="rtl"
+          >
+            Ù…Ø³ØªØ¹Ø¯ ØªØÙˆÙ‘Ù„ ÙÙƒØ±ØªÙƒ Ø¥Ù„Ù‰ ØªØ¬Ø±Ø¨Ø© Ø§Ø³ØªØ«Ù†Ø§Ø¦ÙŠØ©ØŸ
+          </p>
+
+          <p
+            class="orvex-arabic orvex-sub"
+            lang="ar"
+            dir="rtl"
+          >
+            ØªÙˆØ§ØµÙ„ Ù…Ø¹Ù†Ø§ Ø§Ù„ÙŠÙˆÙ…ØŒ ÙˆØ¯Ø¹Ù†Ø§ Ù†ØµÙ†Ø¹ Ù…Ø¹Ù‹Ø§ Ø´ÙŠØ¦Ù‹Ø§
+            Ù…Ø®ØªÙ„ÙÙ‹Ø§ ØªÙ…Ø§Ù…Ù‹Ø§.
+          </p>
+
+          <div class="orvex-slogan">
+            LET'S BUILD SOMETHING EXTRAORDINARY.
+          </div>
+
+          <a
+            class="primary-button"
+            href="#booking"
+          >
+            Contact ORVEX
+            <span>â†—</span>
+          </a>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- Ù†Ù…ÙˆØ°Ø¬ Ø§Ù„ØØ¬Ø² -->
+    <section
+      id="booking"
+      class="booking-section"
+    >
+
+      <div class="booking-copy">
+
+        <div class="section-label">
+          <span>08</span>
+          <span>YOUR NEXT MOVE</span>
+        </div>
+
+        <h2>
+          Feel the
+          <span>difference.</span>
+        </h2>
+
+        <p>
+          Request a private BMW M driving experience.
+        </p>
+
+      </div>
+
+
+      <form class="booking-form">
+
+        <label>
+          <span>Your name</span>
+
+          <input
+            type="text"
+            name="name"
+            placeholder="Enter your name"
+            required
+          >
+        </label>
+
+
+        <label>
+          <span>Email address</span>
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            required
+          >
+        </label>
+
+
+        <label>
+          <span>Preferred model</span>
+
+          <select name="model">
+            <option>M4 Competition</option>
+            <option>XM Label Red</option>
+            <option>M8 Competition</option>
+            <option>i5 M60</option>
+          </select>
+        </label>
+
+
+        <button
+          type="submit"
+          class="primary-button"
+        >
+          Request a drive
+          <span>â†—</span>
+        </button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+
+  <!-- Footer -->
+  <footer class="site-footer">
+
+    <div class="footer-main">
+
+      <div class="footer-brand">
+        <div class="brand-mark">M</div>
+
+        <p>
+          The ultimate driving experience.
+        </p>
+      </div>
+
+
+      <div class="footer-column">
+        <h4>Explore</h4>
+        <a href="#home">Home</a>
+        <a href="#features">Features</a>
+        <a href="#models">Models</a>
+        <a href="#heritage">Heritage</a>
+        <a href="#orvex">ORVEX</a>
+      </div>
+
+
+      <div class="footer-column">
+        <h4>Connect</h4>
+        <a href="#booking">Book a drive</a>
+        <a href="#booking">Contact</a>
+        <a href="#booking">Newsletter</a>
+      </div>
+
+
+      <div class="footer-column">
+        <h4>Follow</h4>
+        <a href="#booking">Instagram</a>
+        <a href="#booking">YouTube</a>
+        <a href="#booking">LinkedIn</a>
+      </div>
+
+    </div>
+
+
+    <div class="footer-bottom">
+      <span>
+        Â© 2025 BMW M Motorsport concept experience
+      </span>
+
+      <span>
+        3D model: "2025 BMW M4 GT3 EVO G82" by
+        <a
+          href="https://sketchfab.com/ddiaz-design"
+          target="_blank"
+          rel="noopener"
+        >
+          Ddiaz Design
+        </a>
+        â€” licensed under
+        <a
+          href="https://creativecommons.org/licenses/by-nc-sa/4.0/"
+          target="_blank"
+          rel="noopener"
+        >
+          CC BY-NC-SA 4.0
+        </a>
+      </span>
+
+      <span>
+        Designed for the bold.
+      </span>
+    </div>
+
+  </footer>
+
+
+  <!-- Ù…Ù„ÙØ§Øª JavaScript -->
+  <script
+    type="module"
+    src="./main.js"
+  ></script>
+
+  <script
+    src="./site-ui.js"
+  ></script>
+
+</body>
+</html>

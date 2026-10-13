@@ -1,0 +1,1542 @@
+// ======================================================
+// BMW M4 GT3 EVO 2025
+// Cinematic Interactive Experience + Engine Audio
+// النسخة المصححة والمطورة
+// ======================================================
+
+import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+
+// ======================================================
+// 1. عناصر الصفحة
+// ======================================================
+
+const container = document.querySelector("#scene-container");
+const loadingMessage = document.querySelector(".loading");
+
+if (!container) {
+  throw new Error("العنصر #scene-container غير موجود داخل index.html");
+}
+
+// احترام إعداد تقليل الحركة في النظام.
+const reduceMotion = window.matchMedia(
+  "(prefers-reduced-motion: reduce)"
+).matches;
+
+
+// ======================================================
+// 2. المشهد والكاميرا
+// ======================================================
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#010204");
+scene.fog = new THREE.Fog("#010204", 22, 60);
+
+const camera = new THREE.PerspectiveCamera(
+  38,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  200
+);
+
+// بداية ونهاية حركة الكاميرا السينمائية.
+const cameraStart = new THREE.Vector3(-11, 3, -0.55);
+const cameraEnd = new THREE.Vector3(-8, 2.2, -5.5);
+const lookTarget = new THREE.Vector3(0, 0.75, -1.4);
+
+// الكاميرا جوه المشهد عشان لوجو ORVEX (ابنها) يتعرض.
+scene.add(camera);
+
+camera.position.copy(cameraStart);
+camera.lookAt(lookTarget);
+
+
+// ======================================================
+// 3. Renderer
+// ======================================================
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: false,
+  powerPreference: "high-performance"
+});
+
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+
+container.appendChild(renderer.domElement);
+
+
+// ======================================================
+// 4. رسالة التحميل
+// ======================================================
+
+if (loadingMessage) {
+  loadingMessage.textContent = "Loading BMW M4 GT3 EVO...";
+}
+
+
+// ======================================================
+// 5. Environment Map
+// ======================================================
+
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+const roomEnvironment = new RoomEnvironment(renderer);
+
+scene.environment = pmremGenerator.fromScene(roomEnvironment, 0.04).texture;
+
+roomEnvironment.dispose();
+pmremGenerator.dispose();
+
+
+// ======================================================
+// 6. OrbitControls
+// ======================================================
+
+const controls = new OrbitControls(camera, renderer.domElement);
+
+controls.enabled = false;
+controls.enableDamping = true;
+controls.dampingFactor = 0.055;
+controls.target.copy(lookTarget);
+controls.minDistance = 4;
+controls.maxDistance = 13;
+controls.maxPolarAngle = Math.PI * 0.48;
+controls.autoRotate = false;
+controls.autoRotateSpeed = 0.8;
+
+// دوران تلقائي هادئ لما المستخدم يسيب الماوس.
+let autoRotateTimer = null;
+
+function scheduleAutoRotate(delay) {
+  clearTimeout(autoRotateTimer);
+
+  if (reduceMotion) {
+    return;
+  }
+
+  autoRotateTimer = setTimeout(() => {
+    controls.autoRotate = entranceFinished;
+  }, delay);
+}
+
+controls.addEventListener("start", () => {
+  controls.autoRotate = false;
+  clearTimeout(autoRotateTimer);
+});
+
+controls.addEventListener("end", () => {
+  scheduleAutoRotate(4000);
+});
+
+
+// ======================================================
+// 7. واجهة التحكم (أزرار + تلميح)
+// ======================================================
+
+const uiStyle = document.createElement("style");
+
+uiStyle.textContent = `
+  .bmw-btn {
+    position: fixed;
+    right: 30px;
+    z-index: 40;
+    padding: 12px 18px;
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 999px;
+    background: rgba(0,0,0,.84);
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: .1em;
+    cursor: pointer;
+    transition: background .25s ease, border-color .25s ease;
+  }
+  .bmw-btn:hover {
+    background: rgba(22,109,226,.35);
+    border-color: rgba(255,255,255,.5);
+  }
+  .bmw-btn:focus-visible {
+    outline: 2px solid #166de2;
+    outline-offset: 3px;
+  }
+  .bmw-hint {
+    position: fixed;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    z-index: 20;
+    padding: 11px 18px;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    background: rgba(0,0,0,.76);
+    color: rgba(255,255,255,.8);
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: .12em;
+    opacity: 0;
+    transition: opacity .8s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .bmw-hud {
+    position: fixed;
+    right: 30px;
+    top: 250px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    opacity: 0;
+    transition: opacity .8s ease;
+    pointer-events: none;
+  }
+  .bmw-hud span {
+    font-size: 26px;
+    font-variant-numeric: tabular-nums;
+  }
+  .bmw-hud small {
+    margin-left: 6px;
+    font-size: 10px;
+    opacity: .6;
+  }
+  @media (max-width: 600px) {
+    .bmw-hud { top: auto; right: auto; left: 14px; bottom: 64px; flex-direction: row; gap: 18px; }
+    .bmw-btn { right: 14px; }
+    .bmw-hint { bottom: 18px; font-size: 10px; }
+  }
+`;
+
+document.head.appendChild(uiStyle);
+
+const controlHint = document.createElement("div");
+controlHint.className = "bmw-hint";
+controlHint.textContent = "Drag to explore · E rev · R replay · M sound";
+document.body.appendChild(controlHint);
+
+// عداد السرعة والـ RPM (إضافة جديدة).
+const hud = document.createElement("div");
+hud.className = "bmw-hud";
+hud.innerHTML =
+  '<div><span id="hud-speed">0</span><small>km/h</small></div>' +
+  '<div><span id="hud-rpm">900</span><small>rpm</small></div>';
+document.body.appendChild(hud);
+
+const hudSpeed = hud.querySelector("#hud-speed");
+const hudRpm = hud.querySelector("#hud-rpm");
+
+
+// ======================================================
+// 8. الإضاءة
+// ======================================================
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.15);
+scene.add(ambientLight);
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 3.5);
+keyLight.position.set(-5, 8, 6);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 1024;
+keyLight.shadow.mapSize.height = 1024;
+keyLight.shadow.camera.left = -6;
+keyLight.shadow.camera.right = 6;
+keyLight.shadow.camera.top = 6;
+keyLight.shadow.camera.bottom = -6;
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far = 30;
+keyLight.shadow.bias = -0.0004;
+scene.add(keyLight);
+
+const blueLight = new THREE.PointLight(0x166de2, 20, 16);
+blueLight.position.set(2, 3, 4);
+scene.add(blueLight);
+
+const redLight = new THREE.PointLight(0xe52b3a, 15, 14);
+redLight.position.set(4, 2, -5);
+scene.add(redLight);
+
+const underGlow = new THREE.PointLight(0x1263c3, 5, 7);
+underGlow.position.set(0, 0.4, -1.4);
+scene.add(underGlow);
+
+
+// ======================================================
+// 9. مجموعة السيارة
+// ======================================================
+
+const carGroup = new THREE.Group();
+scene.add(carGroup);
+
+const realCarGroup = new THREE.Group();
+carGroup.add(realCarGroup);
+
+// اتجاه موديل BMW.
+const MODEL_YAW = -Math.PI / 2;
+realCarGroup.rotation.y = MODEL_YAW;
+
+// ارتفاع العربية فوق الطريق (0 = الإطارات لامسة الطريق).
+// لو لقيت العربية داخلة في الطريق زوّده شوية (0.02 مثلًا).
+const CAR_LIFT = 0;
+
+// ظل تلامس تحت العربية عشان تبان ماسكة في الطريق.
+function createContactShadowTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+
+  const ctx = canvas.getContext("2d");
+  const gradient = ctx.createRadialGradient(128, 128, 10, 128, 128, 128);
+
+  gradient.addColorStop(0, "rgba(0,0,0,0.9)");
+  gradient.addColorStop(0.55, "rgba(0,0,0,0.45)");
+  gradient.addColorStop(1, "rgba(0,0,0,0)");
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 256, 256);
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+const contactShadow = new THREE.Mesh(
+  new THREE.PlaneGeometry(8.4, 3.8),
+  new THREE.MeshBasicMaterial({
+    map: createContactShadowTexture(),
+    transparent: true,
+    depthWrite: false
+  })
+);
+
+contactShadow.rotation.x = -Math.PI / 2;
+contactShadow.position.y = 0.02;
+contactShadow.renderOrder = 1;
+carGroup.add(contactShadow);
+
+
+// ======================================================
+// 10. الطريق والأرضية
+// ======================================================
+
+const road = new THREE.Mesh(
+  new THREE.PlaneGeometry(54, 7),
+  new THREE.MeshStandardMaterial({
+    color: 0x040507,
+    metalness: 0,
+    roughness: 0.85,
+    // انعكاس البيئة على الطريق هادي عشان ما يبقاش أبيض/رمادي فاتح.
+    envMap: scene.environment,
+    envMapIntensity: 0.1
+  })
+);
+
+road.rotation.x = -Math.PI / 2;
+road.position.set(2, -0.02, -1.4);
+road.receiveShadow = true;
+scene.add(road);
+
+// ملحوظة: شلنا الأرضية السودا الكبيرة (blackFloor) لأنها كانت بتقص اسم
+// ORVEX عند خط الأفق، ولون الخلفية أصلًا أسود تقريبًا فمفيش فرق في الشكل.
+
+
+// ======================================================
+// 11. علامات الطريق
+// ======================================================
+
+function addRoadLine(x, z, width, depth, color) {
+  const line = new THREE.Mesh(
+    new THREE.BoxGeometry(width, 0.012, depth),
+    new THREE.MeshBasicMaterial({ color })
+  );
+
+  line.position.set(x, 0, z);
+  scene.add(line);
+}
+
+for (let x = -18; x < 26; x += 3.2) {
+  addRoadLine(x, -1.4, 1.45, 0.045, 0x303c48);
+}
+
+addRoadLine(3, 2.08, 44, 0.035, 0x0b4c91);
+addRoadLine(3, -4.88, 44, 0.035, 0x0b4c91);
+
+
+// ======================================================
+// 12. الإضاءة الأرضية
+// ======================================================
+
+const underLightRing = new THREE.Mesh(
+  new THREE.RingGeometry(1.5, 3.5, 48),
+  new THREE.MeshBasicMaterial({
+    color: 0x0b4c91,
+    transparent: true,
+    opacity: 0.1,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending
+  })
+);
+
+underLightRing.rotation.x = -Math.PI / 2;
+underLightRing.position.set(0, 0.012, -1.4);
+scene.add(underLightRing);
+
+
+// ======================================================
+// 12.1 جزيئات هوا/غبار في الجو (إضافة جديدة)
+// ======================================================
+
+const dustCount = 260;
+const dustPositions = new Float32Array(dustCount * 3);
+
+for (let i = 0; i < dustCount; i++) {
+  dustPositions[i * 3] = THREE.MathUtils.randFloatSpread(40);
+  dustPositions[i * 3 + 1] = THREE.MathUtils.randFloat(-0.6, 5);
+  dustPositions[i * 3 + 2] = THREE.MathUtils.randFloatSpread(14) - 1.4;
+}
+
+const dustGeometry = new THREE.BufferGeometry();
+dustGeometry.setAttribute(
+  "position",
+  new THREE.BufferAttribute(dustPositions, 3)
+);
+
+const dust = new THREE.Points(
+  dustGeometry,
+  new THREE.PointsMaterial({
+    color: 0x9fc8ff,
+    size: 0.035,
+    transparent: true,
+    opacity: 0.35,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  })
+);
+
+scene.add(dust);
+
+
+// ======================================================
+// 12.2 اسم ORVEX في الخلفية (إضافة جديدة)
+// ======================================================
+// الاسم ثابت في الخلفية: لازق في الكاميرا وبعيد جدًا (90 وحدة)، فيفضل
+// ورا العربية من أي زاوية من غير أي حركة، والأرض والعربية بيغطوه طبيعي.
+
+const LOGO_DISTANCE = 90;
+
+// تحكم سريع في شكل الاسم:
+// LOGO_SCALE = نسبة عرض الاسم من عرض الشاشة، LOGO_OPACITY = قوة الإضاءة.
+const LOGO_SCALE = 0.92;
+const LOGO_OPACITY = 0.6;
+
+// بدل صورة اللوجو، بنرسم اسم الشركة كنص بألوان الهوية (سماوي → أزرق).
+const LOGO_TEXT = "ORVEX";
+const LOGO_FONT = "Michroma";
+
+const logoCanvas = document.createElement("canvas");
+logoCanvas.width = 2048;
+logoCanvas.height = 1024;
+
+const logoTexture = new THREE.CanvasTexture(logoCanvas);
+logoTexture.colorSpace = THREE.SRGBColorSpace;
+logoTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+function drawLogoText() {
+  const ctx = logoCanvas.getContext("2d");
+  const width = logoCanvas.width;
+  const height = logoCanvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if ("letterSpacing" in ctx) {
+    ctx.letterSpacing = "44px";
+  }
+
+  // نصغّر الخط لو الاسم أعرض من الصورة.
+  let fontSize = 300;
+  const fontStack = LOGO_FONT + ', "Arial Black", Arial, sans-serif';
+
+  ctx.font = fontSize + "px " + fontStack;
+
+  while (ctx.measureText(LOGO_TEXT).width > 1760 && fontSize > 100) {
+    fontSize -= 10;
+    ctx.font = fontSize + "px " + fontStack;
+  }
+
+  // ألوان هوية ORVEX: سماوي فاتح لأزرق ملكي.
+  const gradient = ctx.createLinearGradient(190, 0, 1858, 0);
+  gradient.addColorStop(0, "#5cf0ff");
+  gradient.addColorStop(0.5, "#2f8bff");
+  gradient.addColorStop(1, "#2a45ff");
+
+  ctx.fillStyle = gradient;
+
+  // وهج ناعم + تعبئة حادة + حد رفيع فاتح للمسة راقية.
+  ctx.shadowColor = "rgba(60, 150, 255, 0.55)";
+  ctx.shadowBlur = 45;
+  ctx.fillText(LOGO_TEXT, width / 2, height / 2);
+
+  ctx.shadowBlur = 0;
+  ctx.fillText(LOGO_TEXT, width / 2, height / 2);
+
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "rgba(190, 240, 255, 0.4)";
+  ctx.strokeText(LOGO_TEXT, width / 2, height / 2);
+
+  logoTexture.needsUpdate = true;
+}
+
+// نرسم بخط احتياطي فورًا، وبعدين نعيد الرسم لما خط Michroma يتحمل.
+drawLogoText();
+
+const logoFontLink = document.createElement("link");
+logoFontLink.rel = "stylesheet";
+logoFontLink.href =
+  "https://fonts.googleapis.com/css2?family=Michroma&display=swap";
+
+logoFontLink.onload = () => {
+  if (document.fonts && document.fonts.load) {
+    document.fonts
+      .load("300px " + LOGO_FONT, LOGO_TEXT)
+      .then(drawLogoText)
+      .catch(() => {});
+  }
+};
+
+document.head.appendChild(logoFontLink);
+
+// Additive عشان الخلفية السودا بتاعة الصورة تختفي من غير مربع حواليها.
+const logoMaterial = new THREE.MeshBasicMaterial({
+  map: logoTexture,
+  transparent: true,
+  opacity: LOGO_OPACITY,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  toneMapped: false,
+  fog: false
+});
+
+const logoMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), logoMaterial);
+logoMesh.renderOrder = -10;
+camera.add(logoMesh);
+
+// مكان وحجم الاسم ثابتين على الشاشة (من غير حركة).
+function layoutLogo() {
+  const visibleHeight =
+    2 *
+    LOGO_DISTANCE *
+    Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+
+  const visibleWidth = visibleHeight * camera.aspect;
+
+  // الاسم كبير: بياخد تقريبًا عرض الشاشة كله (وبحد أقصى حسب الارتفاع).
+  const logoWidth = Math.min(visibleWidth * LOGO_SCALE, visibleHeight * 2.1);
+
+  logoMesh.scale.set(logoWidth, logoWidth / 2, 1);
+
+  // متنصف أفقيًا وفي الجزء العلوي من الشاشة، فيبان فوق العربية.
+  logoMesh.position.set(0, visibleHeight * 0.27, -LOGO_DISTANCE);
+}
+
+layoutLogo();
+
+
+// ======================================================
+// 13. الكشافات
+// ======================================================
+
+const headlightLeft = new THREE.SpotLight(0xc9edff, 0, 18, Math.PI / 8, 0.6, 1.4);
+const headlightRight = new THREE.SpotLight(0xc9edff, 0, 18, Math.PI / 8, 0.6, 1.4);
+
+headlightLeft.position.set(-2.5, 0.65, 0.65);
+headlightRight.position.set(-2.5, 0.65, -0.65);
+
+const headlightTargetLeft = new THREE.Object3D();
+const headlightTargetRight = new THREE.Object3D();
+
+headlightTargetLeft.position.set(-12, 0.25, 0.65);
+headlightTargetRight.position.set(-12, 0.25, -0.65);
+
+headlightLeft.target = headlightTargetLeft;
+headlightRight.target = headlightTargetRight;
+
+carGroup.add(
+  headlightLeft,
+  headlightRight,
+  headlightTargetLeft,
+  headlightTargetRight
+);
+
+
+// ======================================================
+// 14. نار الشكمان
+// ======================================================
+
+const exhaustFireGroup = new THREE.Group();
+exhaustFireGroup.visible = false;
+carGroup.add(exhaustFireGroup);
+
+function createExhaustFlame(x, y, z) {
+  const flame = new THREE.Mesh(
+    new THREE.ConeGeometry(0.12, 0.55, 12),
+    new THREE.MeshBasicMaterial({
+      color: 0xff6a00,
+      transparent: true,
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending
+    })
+  );
+
+  // الذيل يشاور ناحية الخلف (+x) والقاعدة عند الشكمان.
+  flame.rotation.z = -Math.PI / 2;
+  flame.position.set(x + 0.275, y, z);
+  exhaustFireGroup.add(flame);
+
+  return flame;
+}
+
+const flameLeft = createExhaustFlame(3.35, 0.18, -0.42);
+const flameRight = createExhaustFlame(3.35, 0.18, 0.42);
+
+
+// ======================================================
+// 14.1 جزيئات نار الشكمان
+// ======================================================
+
+const exhaustParticles = new THREE.Group();
+exhaustParticles.visible = false;
+carGroup.add(exhaustParticles);
+
+const exhaustParticleMaterial = new THREE.MeshBasicMaterial({
+  color: 0xff8a00,
+  transparent: true,
+  opacity: 0.85,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+
+const exhaustParticleGeometry = new THREE.SphereGeometry(0.045, 6, 6);
+
+const exhaustParticleData = [];
+
+for (let index = 0; index < 18; index += 1) {
+  const particle = new THREE.Mesh(
+    exhaustParticleGeometry,
+    exhaustParticleMaterial.clone()
+  );
+
+  const baseZ = index % 2 === 0 ? -0.42 : 0.42;
+  const baseScale = 0.5 + Math.random() * 0.8;
+
+  particle.position.set(3.35, 0.18, baseZ);
+  particle.scale.setScalar(baseScale);
+
+  exhaustParticles.add(particle);
+
+  exhaustParticleData.push({
+    particle,
+    baseZ,
+    baseScale,
+    speed: 0.003 + Math.random() * 0.006,
+    offset: Math.random() * Math.PI * 2,
+    life: Math.random()
+  });
+}
+
+// ضوء برتقالي بيطلع مع النار.
+// بيفضل موجود دايمًا وبنغير شدته بس، عشان تغيير عدد الإضاءات
+// بيعمل تقطيعة صغيرة لما الـ shaders بتتعاد.
+const exhaustLight = new THREE.PointLight(0xff7a1a, 0, 5);
+exhaustLight.position.set(3.7, 0.25, 0);
+carGroup.add(exhaustLight);
+
+
+// ======================================================
+// 15. مسار دخول السيارة
+// ======================================================
+
+const startPosition = new THREE.Vector3(18, 0, -1.4);
+const endPosition = new THREE.Vector3(0, 0, -1.4);
+
+const startScale = 0.08;
+const endScale = 0.92;
+
+const entranceDuration = reduceMotion ? 3000 : 9000;
+
+
+// ======================================================
+// 16. حالات المشهد
+// ======================================================
+
+let modelReady = false;
+let entranceFinished = false;
+
+let animationStartTime = 0;
+let lastTime = performance.now();
+let stopTime = 0;
+
+let doorsStarted = false;
+let doorsFinished = false;
+
+// قوة الـ Rev الحالية (0 إلى 1) وبتنزل تدريجيًا.
+let revBoost = 0;
+
+
+// ======================================================
+// 16.1 حركة السيارة مع تمرير الصفحة
+// ======================================================
+
+let pageScrollProgress = 0;
+let scrollCarTilt = 0;
+
+window.addEventListener(
+  "scroll",
+  () => {
+    const pageHeight =
+      document.documentElement.scrollHeight - window.innerHeight;
+
+    if (pageHeight <= 0) {
+      pageScrollProgress = 0;
+      return;
+    }
+
+    pageScrollProgress = THREE.MathUtils.clamp(
+      window.scrollY / pageHeight,
+      0,
+      1
+    );
+  },
+  { passive: true }
+);
+
+
+// ======================================================
+// 17. مجموعات الأبواب والعجلات
+// ======================================================
+
+const leftDoorPivot = new THREE.Group();
+const rightDoorPivot = new THREE.Group();
+
+leftDoorPivot.visible = false;
+rightDoorPivot.visible = false;
+
+realCarGroup.add(leftDoorPivot, rightDoorPivot);
+
+const wheelParts = [];
+
+
+// ======================================================
+// 18. التعرف على الأبواب
+// ======================================================
+
+function isLeftDoorName(name) {
+  return /^BMWANC_Door_L_/i.test(name);
+}
+
+function isRightDoorName(name) {
+  return /^BMWANC_Door_R_/i.test(name);
+}
+
+
+// ======================================================
+// 19. تجميع قطع الأبواب
+// ======================================================
+
+function getDoorMeshes(model, matcher) {
+  const result = [];
+
+  model.traverse((object) => {
+    if (object.isMesh && matcher(object.name || "")) {
+      result.push(object);
+    }
+  });
+
+  return result;
+}
+
+function getWorldBox(objects) {
+  const box = new THREE.Box3();
+
+  objects.forEach((object) => {
+    box.expandByObject(object);
+  });
+
+  return box;
+}
+
+function buildDoorPivot(model, objects, pivot, side) {
+  if (objects.length === 0) {
+    return false;
+  }
+
+  model.updateWorldMatrix(true, true);
+
+  const box = getWorldBox(objects);
+  const center = box.getCenter(new THREE.Vector3());
+  const hingeWorld = center.clone();
+
+  if (side === "left") {
+    hingeWorld.z = box.min.z;
+  } else {
+    hingeWorld.z = box.max.z;
+  }
+
+  const hingeLocal = model.worldToLocal(hingeWorld.clone());
+
+  pivot.position.copy(hingeLocal);
+  pivot.rotation.set(0, 0, 0);
+
+  model.add(pivot);
+
+  objects.forEach((object) => {
+    pivot.attach(object);
+  });
+
+  pivot.visible = true;
+
+  return true;
+}
+
+
+// ======================================================
+// 20. اختيار أجزاء الإطارات
+// ======================================================
+
+function collectWheelParts(model) {
+  const result = [];
+
+  model.traverse((object) => {
+    if (!object.isMesh) {
+      return;
+    }
+
+    const name = (object.name || "").toLowerCase();
+
+    const isTire =
+      (name.includes("wheel") || name.includes("tirebmw")) &&
+      !name.includes("brake") &&
+      !name.includes("hub") &&
+      !name.includes("disk") &&
+      !name.includes("disc");
+
+    if (isTire) {
+      result.push(object);
+    }
+  });
+
+  return result;
+}
+
+
+// ======================================================
+// 21. تجهيز الموديل
+// ======================================================
+
+function prepareModel(model) {
+  model.traverse((object) => {
+    if (!object.isMesh) {
+      return;
+    }
+
+    object.castShadow = true;
+    object.receiveShadow = true;
+
+    if (object.material) {
+      const materials = Array.isArray(object.material)
+        ? object.material
+        : [object.material];
+
+      materials.forEach((material) => {
+        material.envMapIntensity = 1.4;
+      });
+    }
+  });
+
+  const originalBox = new THREE.Box3().setFromObject(model);
+  const originalSize = originalBox.getSize(new THREE.Vector3());
+  const originalWidth = Math.max(originalSize.x, originalSize.z);
+
+  if (!originalWidth || originalWidth <= 0) {
+    throw new Error("تعذر حساب حجم موديل BMW");
+  }
+
+  const targetWidth = 7.2;
+  model.scale.setScalar(targetWidth / originalWidth);
+
+  const scaledBox = new THREE.Box3().setFromObject(model);
+  const center = scaledBox.getCenter(new THREE.Vector3());
+
+  model.position.x -= center.x;
+  model.position.z -= center.z;
+
+  const finalBox = new THREE.Box3().setFromObject(model);
+
+  model.position.y -= finalBox.min.y;
+  model.position.y += CAR_LIFT;
+
+  return model;
+}
+
+
+// ======================================================
+// 22. تحميل BMW
+// ======================================================
+
+const loader = new GLTFLoader();
+const modelPath = "./assets/models/bmw_m4_gt3_evo_2025.glb";
+
+loader.load(
+  modelPath,
+
+  (gltf) => {
+    try {
+      const model = prepareModel(gltf.scene);
+
+      realCarGroup.add(model);
+
+      const leftDoorMeshes = getDoorMeshes(model, isLeftDoorName);
+      const rightDoorMeshes = getDoorMeshes(model, isRightDoorName);
+
+      buildDoorPivot(model, leftDoorMeshes, leftDoorPivot, "left");
+      buildDoorPivot(model, rightDoorMeshes, rightDoorPivot, "right");
+
+      collectWheelParts(model).forEach((wheel) => {
+        wheelParts.push(wheel);
+      });
+
+      realCarGroup.visible = true;
+      carGroup.position.copy(startPosition);
+      carGroup.scale.setScalar(startScale);
+
+      modelReady = true;
+      hud.style.opacity = "1";
+      animationStartTime = performance.now();
+      lastTime = animationStartTime;
+
+      console.log("BMW M4 GT3 EVO 2025 loaded successfully");
+      console.log("Left door pieces:", leftDoorMeshes.length);
+      console.log("Right door pieces:", rightDoorMeshes.length);
+      console.log("Wheel parts ready:", wheelParts.length);
+
+      if (loadingMessage) {
+        loadingMessage.remove();
+      }
+    } catch (error) {
+      console.error("BMW preparation failed:", error);
+
+      if (loadingMessage) {
+        loadingMessage.textContent = "BMW preparation failed";
+      }
+    }
+  },
+
+  (progressEvent) => {
+    if (progressEvent.total && loadingMessage) {
+      const percent = (progressEvent.loaded / progressEvent.total) * 100;
+      loadingMessage.textContent = `Loading BMW ${percent.toFixed(0)}%`;
+    }
+  },
+
+  (error) => {
+    console.error("BMW loading failed:", error);
+
+    if (loadingMessage) {
+      loadingMessage.textContent = "BMW model could not be loaded";
+      loadingMessage.style.color = "#ff9d9d";
+    }
+  }
+);
+
+
+// ======================================================
+// 23. الصوت
+// ======================================================
+
+const soundButton = document.createElement("button");
+soundButton.className = "bmw-btn";
+soundButton.style.top = "92px";
+soundButton.textContent = "Start engine";
+document.body.appendChild(soundButton);
+
+const engineStartSound = new Audio("./assets/audio/engine-start.mp3");
+const engineIdleSound = new Audio("./assets/audio/engine-idle.mp3");
+const engineRevSound = new Audio("./assets/audio/engine-rev.mp3");
+
+engineIdleSound.loop = true;
+engineRevSound.loop = true;
+
+engineStartSound.preload = "auto";
+engineIdleSound.preload = "auto";
+engineRevSound.preload = "auto";
+
+engineStartSound.volume = 0.8;
+engineIdleSound.volume = 0;
+engineRevSound.volume = 0;
+
+let soundEnabled = false;
+let idleStarted = false;
+let revStarted = false;
+let idleTimeout = null;
+let revTimeout = null;
+
+function playAudio(audio) {
+  const promise = audio.play();
+
+  if (promise) {
+    promise.catch(() => {
+      console.warn("المتصفح منع تشغيل الصوت أو الملف غير موجود.");
+    });
+  }
+}
+
+function stopAllSounds() {
+  clearTimeout(idleTimeout);
+  clearTimeout(revTimeout);
+
+  [engineStartSound, engineIdleSound, engineRevSound].forEach((audio) => {
+    audio.pause();
+    audio.currentTime = 0;
+  });
+
+  engineIdleSound.volume = 0;
+  engineRevSound.volume = 0;
+
+  idleStarted = false;
+  revStarted = false;
+}
+
+function startEngineSequence() {
+  playAudio(engineStartSound);
+
+  idleTimeout = setTimeout(() => {
+    if (!soundEnabled || idleStarted) {
+      return;
+    }
+
+    engineIdleSound.volume = 0.16;
+    playAudio(engineIdleSound);
+    idleStarted = true;
+  }, 650);
+
+  revTimeout = setTimeout(() => {
+    if (!soundEnabled || revStarted) {
+      return;
+    }
+
+    engineRevSound.volume = 0.04;
+    playAudio(engineRevSound);
+    revStarted = true;
+  }, 850);
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+
+  if (soundEnabled) {
+    soundButton.textContent = "Sound on";
+    startEngineSequence();
+  } else {
+    soundButton.textContent = "Start engine";
+    stopAllSounds();
+  }
+}
+
+soundButton.addEventListener("click", toggleSound);
+
+function updateEngineSound(speed) {
+  if (!soundEnabled) {
+    return;
+  }
+
+  const idleTarget = entranceFinished ? 0.16 : 0.11;
+
+  const revTarget =
+    (entranceFinished ? 0.015 : 0.04 + speed * 0.22) + revBoost * 0.35;
+
+  engineIdleSound.volume = THREE.MathUtils.clamp(
+    THREE.MathUtils.lerp(engineIdleSound.volume, idleTarget, 0.06),
+    0,
+    1
+  );
+
+  engineRevSound.volume = THREE.MathUtils.clamp(
+    THREE.MathUtils.lerp(engineRevSound.volume, revTarget, 0.06),
+    0,
+    1
+  );
+
+  engineRevSound.playbackRate = THREE.MathUtils.lerp(
+    engineRevSound.playbackRate,
+    0.92 + speed * 0.22 + revBoost * 0.5,
+    0.06
+  );
+}
+
+
+// ======================================================
+// 24. فتح الأبواب
+// ======================================================
+
+function updateDoors(progress) {
+  const amount = THREE.MathUtils.clamp(progress, 0, 1);
+  const smoothAmount = 1 - Math.pow(1 - amount, 3);
+
+  leftDoorPivot.rotation.y = THREE.MathUtils.degToRad(-48) * smoothAmount;
+  rightDoorPivot.rotation.y = THREE.MathUtils.degToRad(48) * smoothAmount;
+}
+
+
+// ======================================================
+// 25. دوران العجلات
+// ======================================================
+
+function updateWheels(speed, delta) {
+  const rotationAmount = speed * 7 * delta;
+
+  wheelParts.forEach((wheel) => {
+    wheel.rotation.x += rotationAmount;
+  });
+}
+
+
+// ======================================================
+// 26. إضاءة الكشافات
+// ======================================================
+
+function updateHeadlights(progress) {
+  const brightness = THREE.MathUtils.clamp(progress / 0.25, 0, 1);
+  const intensity = brightness * 2.7;
+
+  headlightLeft.intensity = intensity;
+  headlightRight.intensity = intensity;
+}
+
+
+// ======================================================
+// 27. نار الشكمان
+// ======================================================
+
+function getExhaustIntensity(progress) {
+  const arrival = progress > 0.82 && progress < 1 ? 1 : 0;
+
+  return Math.max(arrival, revBoost);
+}
+
+// ======================================================
+// تحريك جزيئات نار الشكمان
+// ======================================================
+
+function updateExhaustParticles(progress, elapsed) {
+  // الجزيئات بتشتغل وقت الوصول، وكمان لما تضغط Rev.
+  const isActive =
+    (progress > 0.78 && progress < 1) || revBoost > 0.02;
+
+  exhaustParticles.visible = isActive;
+
+  if (!isActive) {
+    return;
+  }
+
+  // الـ Rev بيطوّل مسافة خروج الجزيئات.
+  const reach = 0.75 * (1 + revBoost * 1.2);
+
+  exhaustParticleData.forEach((data) => {
+    const particle = data.particle;
+
+    const cycle = ((elapsed * data.speed) / 10 + data.offset) % 1;
+
+    particle.position.x = 3.35 + cycle * reach;
+
+    particle.position.y =
+      0.18 +
+      Math.sin(elapsed * 0.012 + data.offset) * 0.06 +
+      cycle * 0.16;
+
+    particle.position.z =
+      data.baseZ + Math.sin(elapsed * 0.01 + data.offset) * 0.05;
+
+    const fade = 1 - cycle;
+
+    particle.material.opacity = fade * 0.85;
+    particle.material.color.setHSL(0.09 - cycle * 0.07, 1, 0.5);
+
+    particle.scale.setScalar((0.45 + cycle * 1.2) * fade);
+  });
+}
+
+
+function updateExhaustFire(progress, elapsed, delta) {
+  const intensity = getExhaustIntensity(progress);
+  const active = intensity > 0.02;
+
+  exhaustFireGroup.visible = active;
+
+  // الجزيئات ليها نافذة تشغيل خاصة بيها (من 0.78).
+  updateExhaustParticles(progress, elapsed);
+
+  exhaustLight.intensity = active
+    ? intensity * (3 + Math.random() * 1.5)
+    : 0;
+
+  if (!active) {
+    return;
+  }
+
+  // نبضة أساسية + رعشة عشوائية بسيطة عشان النار تبقى طبيعية أكتر.
+  const pulse =
+    (0.75 + Math.sin(elapsed * 0.035) * 0.25) * (0.6 + intensity * 0.6);
+
+  const flickerLeft = pulse * (0.9 + Math.random() * 0.2);
+  const flickerRight = pulse * (0.9 + Math.random() * 0.2);
+
+  flameLeft.scale.set(flickerLeft, flickerLeft, flickerLeft);
+  flameRight.scale.set(flickerRight, flickerRight, flickerRight);
+}
+
+
+// ======================================================
+// 27.1 عداد السرعة والـ RPM
+// ======================================================
+
+let lastHudText = "";
+
+function updateHud(speed) {
+  const kmh = Math.round((speed * 180) / 5) * 5;
+
+  const rpm = Math.min(
+    9000,
+    Math.round((900 + speed * 5200 + revBoost * 5500) / 50) * 50
+  );
+
+  const text = kmh + "|" + rpm;
+
+  if (text === lastHudText) {
+    return;
+  }
+
+  lastHudText = text;
+  hudSpeed.textContent = kmh;
+  hudRpm.textContent = rpm;
+}
+
+
+// ======================================================
+// 28. دوال الحركة
+// ======================================================
+
+function easeInOutCubic(value) {
+  return value < 0.5
+    ? 4 * value * value * value
+    : 1 - Math.pow(-2 * value + 2, 3) / 2;
+}
+
+function easeOutCubic(value) {
+  return 1 - Math.pow(1 - value, 3);
+}
+
+
+// ======================================================
+// 29. زر Replay
+// ======================================================
+
+const replayButton = document.createElement("button");
+replayButton.className = "bmw-btn";
+replayButton.style.top = "142px";
+replayButton.textContent = "Replay";
+document.body.appendChild(replayButton);
+
+function replayScene() {
+  if (!modelReady) {
+    return;
+  }
+
+  animationStartTime = performance.now();
+  lastTime = animationStartTime;
+
+  entranceFinished = false;
+  doorsStarted = false;
+  doorsFinished = false;
+
+  controls.enabled = false;
+  controls.autoRotate = false;
+  clearTimeout(autoRotateTimer);
+
+  controlHint.style.opacity = "0";
+
+  // رجّع الكاميرا لنقطة البداية.
+  camera.position.copy(cameraStart);
+  controls.target.copy(lookTarget);
+  camera.lookAt(lookTarget);
+
+  carGroup.position.copy(startPosition);
+  carGroup.scale.setScalar(startScale);
+  carGroup.rotation.set(0, 0, 0);
+
+  realCarGroup.rotation.y = MODEL_YAW;
+  scrollCarTilt = 0;
+  revBoost = 0;
+
+  leftDoorPivot.rotation.y = 0;
+  rightDoorPivot.rotation.y = 0;
+
+  exhaustFireGroup.visible = false;
+  exhaustParticles.visible = false;
+  exhaustLight.intensity = 0;
+
+  camera.fov = 38;
+  camera.updateProjectionMatrix();
+  layoutLogo();
+
+  if (soundEnabled) {
+    stopAllSounds();
+    startEngineSequence();
+  }
+}
+
+replayButton.addEventListener("click", replayScene);
+
+
+// ======================================================
+// 29.05 زر Rev (إضافة جديدة)
+// ======================================================
+
+const revButton = document.createElement("button");
+revButton.className = "bmw-btn";
+revButton.style.top = "192px";
+revButton.textContent = "Rev engine";
+document.body.appendChild(revButton);
+
+function revEngine() {
+  // الـ Rev متاح بعد ما العربية توصل وتقف.
+  if (!entranceFinished) {
+    return;
+  }
+
+  revBoost = 1;
+}
+
+revButton.addEventListener("click", revEngine);
+
+
+// ======================================================
+// 29.1 اختصارات الكيبورد (إضافة جديدة)
+// ======================================================
+
+window.addEventListener("keydown", (event) => {
+  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
+  const key = event.key.toLowerCase();
+
+  if (key === "r") {
+    replayScene();
+  } else if (key === "m") {
+    toggleSound();
+  } else if (key === "e") {
+    revEngine();
+  }
+});
+
+
+// ======================================================
+// 30. Animation Loop
+// ======================================================
+
+function animate(currentTime) {
+  requestAnimationFrame(animate);
+
+
+  if (!modelReady || animationStartTime === 0) {
+    renderer.render(scene, camera);
+    return;
+  }
+
+  const delta = Math.min((currentTime - lastTime) / 1000, 0.05);
+  lastTime = currentTime;
+
+  const elapsed = currentTime - animationStartTime;
+
+  let progress = elapsed / entranceDuration;
+  progress = THREE.MathUtils.clamp(progress, 0, 1);
+
+  const movementProgress = easeInOutCubic(progress);
+  const scaleProgress = easeOutCubic(progress);
+
+  // حركة السيارة من بعيد.
+  carGroup.position.x = THREE.MathUtils.lerp(
+    startPosition.x,
+    endPosition.x,
+    movementProgress
+  );
+
+  carGroup.position.z = -1.4;
+
+  // تكبير تدريجي.
+  carGroup.scale.setScalar(
+    THREE.MathUtils.lerp(startScale, endScale, scaleProgress)
+  );
+
+  const speed = 1 - progress;
+
+  // اهتزاز خفيف.
+  carGroup.position.y =
+    Math.sin(elapsed * 0.018) * (progress < 1 ? 0.003 : 0.0015);
+
+  carGroup.rotation.z = THREE.MathUtils.lerp(
+    carGroup.rotation.z,
+    speed * 0.012,
+    0.08
+  );
+
+  // حركة كاميرا سينمائية أثناء الدخول.
+  if (!entranceFinished) {
+    camera.position.lerpVectors(cameraStart, cameraEnd, movementProgress);
+    camera.lookAt(lookTarget);
+
+    // إحساس بالسرعة: زاوية الرؤية أوسع في الأول وتضيق مع التباطؤ.
+    camera.fov = reduceMotion ? 38 : 38 + speed * 5;
+    camera.updateProjectionMatrix();
+    layoutLogo();
+  }
+
+  // دوران العجلات.
+  updateWheels(speed, delta);
+
+  // الكشافات والنار.
+  updateHeadlights(progress);
+
+  // الـ Rev بينزل تدريجيًا، والعربية بتهتز معاه.
+  revBoost = Math.max(0, revBoost - delta * 0.9);
+
+  if (revBoost > 0.02) {
+    carGroup.position.x += (Math.random() - 0.5) * 0.008 * revBoost;
+    carGroup.position.y += (Math.random() - 0.5) * 0.01 * revBoost;
+  }
+
+  updateExhaustFire(progress, elapsed, delta);
+
+  // الصوت حسب الحركة.
+  updateEngineSound(speed);
+  updateHud(speed);
+
+  // الإضاءة الأرضية.
+  underGlow.intensity =
+    4.5 + Math.sin(elapsed * 0.004) * 0.8 + revBoost * 3;
+
+  underLightRing.material.opacity = 0.09 + Math.sin(elapsed * 0.004) * 0.015;
+
+  // الجزيئات تتحرك ببطء.
+  if (!reduceMotion) {
+    dust.rotation.y += delta * 0.01;
+  }
+
+  // ميل خفيف للسيارة مع التمرير بعد الوصول.
+  if (entranceFinished) {
+    scrollCarTilt = THREE.MathUtils.lerp(
+      scrollCarTilt,
+      pageScrollProgress,
+      0.05
+    );
+
+    realCarGroup.rotation.y = MODEL_YAW + scrollCarTilt * 0.35;
+  }
+
+  // الوصول النهائي.
+  if (progress >= 1 && !entranceFinished) {
+    entranceFinished = true;
+    stopTime = currentTime;
+
+    carGroup.position.copy(endPosition);
+    carGroup.position.y = 0;
+    carGroup.scale.setScalar(endScale);
+    carGroup.rotation.set(0, 0, 0);
+
+    camera.position.copy(cameraEnd);
+    camera.fov = 38;
+    camera.updateProjectionMatrix();
+    layoutLogo();
+    controls.target.copy(lookTarget);
+    controls.enabled = true;
+
+    controlHint.style.opacity = "1";
+
+    scheduleAutoRotate(3500);
+  }
+
+  // فتح الأبواب بعد التوقف.
+  if (entranceFinished && !doorsStarted && currentTime - stopTime >= 700) {
+    doorsStarted = true;
+  }
+
+  if (doorsStarted && !doorsFinished) {
+    const doorElapsed = currentTime - stopTime - 700;
+    const doorProgress = doorElapsed / 1600;
+
+    updateDoors(doorProgress);
+
+    if (doorProgress >= 1) {
+      doorsFinished = true;
+    }
+  }
+
+  if (entranceFinished) {
+    controls.update();
+  }
+
+  renderer.render(scene, camera);
+}
+
+// تشغيل المشهد.
+animate(performance.now());
+
+
+// ======================================================
+// 31. Responsive
+// ======================================================
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  layoutLogo();
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+});
+
+
+// ======================================================
+// 32. إيقاف الصوت لما التبويب يتخبى (إضافة جديدة)
+// ======================================================
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    engineStartSound.pause();
+    engineIdleSound.pause();
+    engineRevSound.pause();
+    return;
+  }
+
+  if (soundEnabled) {
+    if (idleStarted) {
+      playAudio(engineIdleSound);
+    }
+
+    if (revStarted) {
+      playAudio(engineRevSound);
+    }
+  }
+});

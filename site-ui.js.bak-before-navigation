@@ -1,0 +1,954 @@
+// ======================================================
+// BMW M MOTORSPORT
+// Website Interactions
+// ======================================================
+
+
+// ======================================================
+// 1. إخفاء شاشة التحميل
+// ======================================================
+
+const pageLoader =
+  document.querySelector(".page-loader");
+
+window.addEventListener(
+  "load",
+  () => {
+    setTimeout(
+      () => {
+        if (pageLoader) {
+          pageLoader.classList.add(
+            "loaded"
+          );
+        }
+      },
+      900
+    );
+  }
+);
+
+
+// ======================================================
+// 2. Header عند التمرير
+// ======================================================
+
+const siteHeader =
+  document.querySelector(".site-header");
+
+function updateHeader() {
+  if (!siteHeader) {
+    return;
+  }
+
+  if (
+    window.scrollY > 40
+  ) {
+    siteHeader.classList.add(
+      "scrolled"
+    );
+  } else {
+    siteHeader.classList.remove(
+      "scrolled"
+    );
+  }
+}
+
+window.addEventListener(
+  "scroll",
+  updateHeader,
+  {
+    passive: true
+  }
+);
+
+updateHeader();
+
+
+// ======================================================
+// 3. قائمة الهاتف والتنقل التفاعلي
+// ======================================================
+
+const menuToggle = document.querySelector(".menu-toggle");
+const mainNav = document.querySelector(".main-nav");
+const navMenuLinks = document.querySelectorAll(".main-nav a");
+
+function closeMobileMenu() {
+  if (!mainNav || !menuToggle) {
+    return;
+  }
+
+  mainNav.classList.remove("open");
+  menuToggle.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("nav-open");
+}
+
+function openMobileMenu() {
+  if (!mainNav || !menuToggle) {
+    return;
+  }
+
+  mainNav.classList.add("open");
+  menuToggle.setAttribute("aria-expanded", "true");
+  document.body.classList.add("nav-open");
+}
+
+if (menuToggle && mainNav) {
+  menuToggle.setAttribute("aria-expanded", "false");
+
+  menuToggle.addEventListener("click", () => {
+    const isOpen = mainNav.classList.contains("open");
+
+    if (isOpen) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
+  });
+
+  navMenuLinks.forEach((link) => {
+    link.addEventListener("click", () => {
+      closeMobileMenu();
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!mainNav.classList.contains("open")) {
+      return;
+    }
+
+    const clickedInsideMenu = mainNav.contains(event.target);
+    const clickedToggle = menuToggle.contains(event.target);
+
+    if (!clickedInsideMenu && !clickedToggle) {
+      closeMobileMenu();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeMobileMenu();
+    }
+  });
+}
+
+// ======================================================
+// 4. Smooth Scroll + Header Offset
+// ======================================================
+
+function getHeaderOffset() {
+  if (!siteHeader) {
+    return 0;
+  }
+
+  return siteHeader.getBoundingClientRect().height + 14;
+}
+
+function scrollToTarget(target, updateHistory = true) {
+  if (!target) {
+    return;
+  }
+
+  const targetTop =
+    target.getBoundingClientRect().top +
+    window.scrollY -
+    getHeaderOffset();
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: prefersReducedMotion ? "auto" : "smooth"
+  });
+
+  if (updateHistory && target.id) {
+    window.history.replaceState(null, "", `#${target.id}`);
+  }
+}
+
+function getTargetFromLink(link) {
+  const targetId = link.getAttribute("href");
+
+  if (!targetId || targetId === "#" || !targetId.startsWith("#")) {
+    return null;
+  }
+
+  try {
+    return document.querySelector(targetId);
+  } catch (error) {
+    console.warn("Invalid navigation target:", targetId);
+    return null;
+  }
+}
+
+// Works for the main navigation and any future internal scroll link.
+document
+  .querySelectorAll('a[href^="#"], [data-scroll-target]')
+  .forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const targetSelector = link.hasAttribute("data-scroll-target")
+        ? link.getAttribute("data-scroll-target")
+        : link.getAttribute("href");
+
+      if (!targetSelector || targetSelector === "#") {
+        event.preventDefault();
+        return;
+      }
+
+      let target;
+
+      try {
+        target = document.querySelector(targetSelector);
+      } catch (error) {
+        console.warn("Invalid navigation target:", targetSelector);
+        return;
+      }
+
+      if (!target) {
+        return;
+      }
+
+      event.preventDefault();
+      closeMobileMenu();
+      scrollToTarget(target);
+    });
+  });
+
+// ======================================================
+// 5. ظهور البطاقات أثناء التمرير
+// ======================================================
+
+const revealElements =
+  document.querySelectorAll(
+    ".reveal-card, .reveal-on-scroll"
+  );
+
+const revealObserver =
+  new IntersectionObserver(
+    (entries) => {
+      entries.forEach(
+        (entry) => {
+          if (
+            entry.isIntersecting
+          ) {
+            entry.target.classList.add(
+              "is-visible"
+            );
+
+            revealObserver.unobserve(
+              entry.target
+            );
+          }
+        }
+      );
+    },
+    {
+      threshold: 0.16,
+      rootMargin: "0px 0px -45px 0px"
+    }
+  );
+
+revealElements.forEach(
+  (element) => {
+    revealObserver.observe(
+      element
+    );
+  }
+);
+
+
+// ======================================================
+// 6. عدادات الإحصائيات
+// ======================================================
+
+const counters =
+  document.querySelectorAll(
+    ".counter"
+  );
+
+function animateCounter(
+  element
+) {
+  const target =
+    Number(
+      element.dataset.target
+    );
+
+  const decimals =
+    Number(
+      element.dataset.decimals || 0
+    );
+
+  const duration =
+    1700;
+
+  const startTime =
+    performance.now();
+
+  function updateCounter(
+    currentTime
+  ) {
+    const elapsed =
+      currentTime -
+      startTime;
+
+    const progress =
+      Math.min(
+        elapsed /
+          duration,
+        1
+      );
+
+    // حركة ناعمة في بداية ونهاية العد.
+    const eased =
+      1 -
+      Math.pow(
+        1 - progress,
+        3
+      );
+
+    const value =
+      target *
+      eased;
+
+    element.textContent =
+      value.toFixed(
+        decimals
+      );
+
+    if (
+      progress < 1
+    ) {
+      requestAnimationFrame(
+        updateCounter
+      );
+    } else {
+      element.textContent =
+        target.toFixed(
+          decimals
+        );
+    }
+  }
+
+  requestAnimationFrame(
+    updateCounter
+  );
+}
+
+const counterObserver =
+  new IntersectionObserver(
+    (entries) => {
+      entries.forEach(
+        (entry) => {
+          if (
+            entry.isIntersecting
+          ) {
+            animateCounter(
+              entry.target
+            );
+
+            counterObserver.unobserve(
+              entry.target
+            );
+          }
+        }
+      );
+    },
+    {
+      threshold: 0.65
+    }
+  );
+
+counters.forEach(
+  (counter) => {
+    counterObserver.observe(
+      counter
+    );
+  }
+);
+
+
+// ======================================================
+// 7. تبديل فئات السيارات
+// ======================================================
+
+const modelTabs =
+  document.querySelectorAll(
+    ".model-tab"
+  );
+
+const modelPanels =
+  document.querySelectorAll(
+    ".model-info, .model-image"
+  );
+
+modelTabs.forEach(
+  (tab) => {
+    tab.addEventListener(
+      "click",
+      () => {
+        const selectedModel =
+          tab.dataset.model;
+
+        modelTabs.forEach(
+          (item) => {
+            item.classList.toggle(
+              "active",
+              item === tab
+            );
+          }
+        );
+
+        modelPanels.forEach(
+          (panel) => {
+            panel.classList.toggle(
+              "active",
+              panel.dataset.panel ===
+                selectedModel
+            );
+          }
+        );
+      }
+    );
+  }
+);
+
+
+// ======================================================
+// 8. Custom Cursor
+// ======================================================
+
+const customCursor =
+  document.querySelector(
+    ".custom-cursor"
+  );
+
+const cursorRing =
+  document.querySelector(
+    ".cursor-ring"
+  );
+
+const canUseCustomCursor =
+  window.matchMedia(
+    "(pointer: fine)"
+  ).matches;
+
+if (
+  canUseCustomCursor &&
+  customCursor &&
+  cursorRing
+) {
+  document.body.classList.add(
+    "cursor-ready"
+  );
+
+  let cursorX =
+    window.innerWidth / 2;
+
+  let cursorY =
+    window.innerHeight / 2;
+
+  let ringX =
+    cursorX;
+
+  let ringY =
+    cursorY;
+
+
+  window.addEventListener(
+    "mousemove",
+    (event) => {
+      cursorX =
+        event.clientX;
+
+      cursorY =
+        event.clientY;
+
+      customCursor.style.left =
+        `${cursorX}px`;
+
+      customCursor.style.top =
+        `${cursorY}px`;
+    },
+    {
+      passive: true
+    }
+  );
+
+
+  function animateCursor() {
+    ringX +=
+      (
+        cursorX -
+        ringX
+      ) *
+      0.15;
+
+    ringY +=
+      (
+        cursorY -
+        ringY
+      ) *
+      0.15;
+
+    cursorRing.style.left =
+      `${ringX}px`;
+
+    cursorRing.style.top =
+      `${ringY}px`;
+
+    requestAnimationFrame(
+      animateCursor
+    );
+  }
+
+  animateCursor();
+
+
+  const interactiveElements =
+    document.querySelectorAll(
+      "a, button, input, select"
+    );
+
+  interactiveElements.forEach(
+    (element) => {
+      element.addEventListener(
+        "mouseenter",
+        () => {
+          document.body.classList.add(
+            "cursor-hover"
+          );
+        }
+      );
+
+      element.addEventListener(
+        "mouseleave",
+        () => {
+          document.body.classList.remove(
+            "cursor-hover"
+          );
+        }
+      );
+    }
+  );
+}
+
+
+// ======================================================
+// 9. Image parallax is handled by smoothParallax()
+//    in section 18 (single rAF-based implementation).
+// ======================================================
+
+
+// ======================================================
+// 10. تأثير حركة البطاقات بالماوس
+// ======================================================
+
+const featureCards =
+  document.querySelectorAll(
+    ".feature-card"
+  );
+
+if (
+  canUseCustomCursor
+) {
+  featureCards.forEach(
+    (card) => {
+      card.addEventListener(
+        "mousemove",
+        (event) => {
+          const rect =
+            card.getBoundingClientRect();
+
+          const x =
+            event.clientX -
+            rect.left;
+
+          const y =
+            event.clientY -
+            rect.top;
+
+          const rotateY =
+            (
+              x /
+              rect.width -
+              0.5
+            ) *
+            5;
+
+          const rotateX =
+            -(
+              y /
+              rect.height -
+              0.5
+            ) *
+            5;
+
+          card.style.transform =
+            `perspective(700px)
+             rotateX(${rotateX}deg)
+             rotateY(${rotateY}deg)
+             translateY(-8px)`;
+        }
+      );
+
+      card.addEventListener(
+        "mouseleave",
+        () => {
+          card.style.transform =
+            "";
+        }
+      );
+    }
+  );
+}
+
+
+// ======================================================
+// 11. نموذج الحجز
+// ======================================================
+
+const bookingForm =
+  document.querySelector(
+    ".booking-form"
+  );
+
+if (
+  bookingForm
+) {
+  bookingForm.addEventListener(
+    "submit",
+    (event) => {
+      event.preventDefault();
+
+      const submitButton =
+        bookingForm.querySelector(
+          'button[type="submit"]'
+        );
+
+      if (!submitButton) {
+        return;
+      }
+
+      const originalText =
+        submitButton.innerHTML;
+
+      submitButton.innerHTML =
+        "Request received ✓";
+
+      submitButton.style.background =
+        "#16834d";
+
+      submitButton.disabled =
+        true;
+
+      bookingForm.reset();
+
+
+      setTimeout(
+        () => {
+          submitButton.innerHTML =
+            originalText;
+
+          submitButton.style.background =
+            "";
+
+          submitButton.disabled =
+            false;
+        },
+        3500
+      );
+    }
+  );
+}
+
+
+// ======================================================
+// 12. جعل عناصر الأقسام قابلة للظهور
+// ======================================================
+
+const sectionsToReveal =
+  document.querySelectorAll(
+    ".intro-section, .stats-section, .spotlight-section, .heritage-section, .booking-section"
+  );
+
+sectionsToReveal.forEach(
+  (section) => {
+    section
+      .querySelectorAll(
+        ".section-label, h2, p, .primary-button, .outline-button, .booking-form, .stat-item"
+      )
+      .forEach(
+        (element) => {
+          element.classList.add(
+            "reveal-on-scroll"
+          );
+
+          revealObserver.observe(
+            element
+          );
+        }
+      );
+  }
+);
+
+
+// ======================================================
+// 13. منع روابط Placeholder من القفز لأعلى الصفحة
+// ======================================================
+
+document
+  .querySelectorAll(
+    'a[href="#"]'
+  )
+  .forEach(
+    (link) => {
+      link.addEventListener(
+        "click",
+        (event) => {
+          event.preventDefault();
+        }
+      );
+    }
+  );
+
+
+// ======================================================
+// 14. (removed — parallax init runs in section 18)
+// ======================================================
+
+
+// ======================================================
+// 15. رسالة نجاح في Console
+// ======================================================
+
+console.log(
+  "BMW M website UI initialized successfully"
+);
+// ======================================================
+// 16. شريط تقدم التمرير
+// ======================================================
+
+const scrollProgress =
+  document.querySelector(
+    ".scroll-progress span"
+  );
+
+function updateScrollProgress() {
+  if (!scrollProgress) {
+    return;
+  }
+
+  const documentHeight =
+    document.documentElement.scrollHeight -
+    window.innerHeight;
+
+  if (documentHeight <= 0) {
+    scrollProgress.style.width =
+      "0%";
+
+    return;
+  }
+
+  const scrollRatio =
+    window.scrollY /
+    documentHeight;
+
+  const percentage =
+    Math.min(
+      Math.max(
+        scrollRatio * 100,
+        0
+      ),
+      100
+    );
+
+  scrollProgress.style.width =
+    `${percentage}%`;
+}
+
+window.addEventListener(
+  "scroll",
+  updateScrollProgress,
+  {
+    passive: true
+  }
+);
+
+updateScrollProgress();
+
+
+// ======================================================
+// 17. تحديد القسم الحالي في القائمة
+// ======================================================
+
+const navigationLinks =
+  document.querySelectorAll(
+    ".main-nav a"
+  );
+
+const navigationSections =
+  Array.from(
+    navigationLinks
+  )
+    .map(
+      (link) => {
+        const id =
+          link.getAttribute(
+            "href"
+          );
+
+        if (
+          !id ||
+          id === "#"
+        ) {
+          return null;
+        }
+
+        const section =
+          document.querySelector(
+            id
+          );
+
+        if (!section) {
+          return null;
+        }
+
+        return {
+          link,
+          section
+        };
+      }
+    )
+    .filter(Boolean);
+
+
+function updateActiveNavigation() {
+  const currentPosition =
+    window.scrollY +
+    window.innerHeight *
+      0.35;
+
+  let activeItem =
+    null;
+
+  navigationSections.forEach(
+    (item) => {
+      const sectionTop =
+        item.section.offsetTop;
+
+      if (
+        currentPosition >=
+        sectionTop
+      ) {
+        activeItem =
+          item;
+      }
+    }
+  );
+
+  navigationLinks.forEach(
+    (link) => {
+      link.classList.remove(
+        "active"
+      );
+    }
+  );
+
+  if (activeItem) {
+    activeItem.link.classList.add(
+      "active"
+    );
+  }
+}
+
+window.addEventListener(
+  "scroll",
+  updateActiveNavigation,
+  {
+    passive: true
+  }
+);
+
+updateActiveNavigation();
+
+
+// ======================================================
+// 18. Parallax أكثر نعومة
+// ======================================================
+
+const reduceMotionUI =
+  window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+let parallaxFrame =
+  null;
+
+function smoothParallax() {
+  if (
+    parallaxFrame
+  ) {
+    return;
+  }
+
+  parallaxFrame =
+    requestAnimationFrame(
+      () => {
+        const scrollY =
+          window.scrollY;
+
+        const heroWord =
+          document.querySelector(
+            ".hero-background-word"
+          );
+
+        const statsWord =
+          document.querySelector(
+            ".stats-background"
+          );
+
+        const spotlightWord =
+          document.querySelector(
+            ".spotlight-word"
+          );
+
+        if (heroWord) {
+          heroWord.style.transform =
+            `translate3d(0, ${scrollY * 0.16}px, 0)`;
+        }
+
+        if (statsWord) {
+          statsWord.style.transform =
+            `translate3d(-50%, calc(-50% + ${scrollY * 0.08}px), 0)`;
+        }
+
+        if (spotlightWord) {
+          spotlightWord.style.transform =
+            `translate3d(-50%, calc(-50% + ${scrollY * 0.1}px), 0)`;
+        }
+
+        parallaxFrame =
+          null;
+      }
+    );
+}
+
+if (
+  !reduceMotionUI
+) {
+  window.addEventListener(
+    "scroll",
+    smoothParallax,
+    {
+      passive: true
+    }
+  );
+
+  smoothParallax();
+}
+
+console.log(
+  "Scroll experience initialized successfully"
+);
